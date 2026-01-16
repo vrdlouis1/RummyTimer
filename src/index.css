@@ -20,12 +20,20 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
-  min-height: 100vh;
+  padding: 0;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
   background: #f5f6fa;
-  display: block;
   color: #0f1115;
+}
+
+#root {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 h1, h2, h3, h4 {

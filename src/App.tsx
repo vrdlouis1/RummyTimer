@@ -151,33 +151,6 @@ function App() {
   const startPerfRef = useRef<number>(0)
   const elapsedBeforeRunRef = useRef<number>(0)
   const toneRef = useRef(createTonePlayer())
-  const appScaleRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const updateScale = () => {
-      const width = window.innerWidth
-      const height = window.innerHeight
-      const el = appScaleRef.current
-      if (!el) return
-
-      const root = document.documentElement
-      // Reset scale to measure the natural size of the UI.
-      root.style.setProperty('--ui-scale', '1')
-
-      const designWidth = Math.max(1, el.scrollWidth)
-      const designHeight = Math.max(1, el.scrollHeight)
-      const scale = Math.min(width / designWidth, height / designHeight)
-      const clamped = Math.min(1.2, Math.max(0.45, scale))
-      root.style.setProperty('--ui-scale', String(clamped))
-    }
-
-    const raf = window.requestAnimationFrame(updateScale)
-    window.addEventListener('resize', updateScale)
-    return () => {
-      window.cancelAnimationFrame(raf)
-      window.removeEventListener('resize', updateScale)
-    }
-  }, [phase, players.length, scoreHistory.length, archives.length])
 
   const longPressTimerRef = useRef<number | null>(null)
 
@@ -580,7 +553,7 @@ function App() {
       onClick={phase === 'playing' ? nextTurn : undefined}
       style={phase === 'playing' ? { cursor: 'pointer' } : undefined}
     >
-      <div className="app-scale" ref={appScaleRef}>
+      <div className="app-scale">
       {phase === 'setup' ? (
         <>
           <div className="centered-layout">
