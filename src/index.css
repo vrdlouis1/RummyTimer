@@ -13,6 +13,7 @@
   --tile-red: #d6001c;
   --tile-blue: #1e4fa3;
   --light-gray: #e6e9f0;
+  --ui-scale: 1;
 }
 
 * {

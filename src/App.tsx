@@ -152,6 +152,22 @@ function App() {
   const elapsedBeforeRunRef = useRef<number>(0)
   const toneRef = useRef(createTonePlayer())
 
+  useEffect(() => {
+    const updateScale = () => {
+      const width = window.innerWidth
+      const height = window.innerHeight
+      const baseWidth = 1200
+      const baseHeight = 820
+      const scale = Math.min(1, width / baseWidth, height / baseHeight)
+      const clamped = Math.max(0.7, scale)
+      document.documentElement.style.setProperty('--ui-scale', String(clamped))
+    }
+
+    updateScale()
+    window.addEventListener('resize', updateScale)
+    return () => window.removeEventListener('resize', updateScale)
+  }, [])
+
   const longPressTimerRef = useRef<number | null>(null)
 
   const activePlayer = useMemo(() => players[activeIndex], [players, activeIndex])
@@ -548,7 +564,12 @@ function App() {
   })()
 
   return (
-    <div className={`page ${phase}`}>
+    <div
+      className={`page ${phase}`}
+      onClick={phase === 'playing' ? nextTurn : undefined}
+      style={phase === 'playing' ? { cursor: 'pointer' } : undefined}
+    >
+      <div className="app-scale">
       {phase === 'setup' ? (
         <>
           <div className="centered-layout">
@@ -628,7 +649,7 @@ function App() {
         </>
       ) : phase === 'playing' ? (
         <>
-          <div className="fullscreen-timer" onClick={nextTurn} style={{ cursor: 'pointer' }}>
+          <div className="fullscreen-timer">
             <div className="timer-header-centered">
               <h2 className="player-name-centered">{activePlayer?.name ?? 'No player'}</h2>
               <div className="corner-controls">
@@ -963,6 +984,7 @@ function App() {
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }

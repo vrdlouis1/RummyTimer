@@ -8,6 +8,9 @@
   min-height: 100dvh;
   overflow-x: hidden;
   overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .page.playing {
@@ -17,6 +20,14 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.app-scale {
+  width: min(1200px, 100%);
+  transform: scale(var(--ui-scale));
+  transform-origin: top center;
 }
 
 .centered-layout {
