@@ -151,61 +151,6 @@ function App() {
   const startPerfRef = useRef<number>(0)
   const elapsedBeforeRunRef = useRef<number>(0)
   const toneRef = useRef(createTonePlayer())
-  const appScaleRef = useRef<HTMLDivElement | null>(null)
-
-  // Scale the entire UI to fit viewport without scrolling
-  useEffect(() => {
-    const el = appScaleRef.current
-    if (!el) return
-
-    let rafId = 0
-
-    const measureAndScale = () => {
-      rafId = 0
-      
-      // Reset transform to measure natural size
-      el.style.transform = 'none'
-      
-      // Get dimensions after layout
-      requestAnimationFrame(() => {
-        const contentWidth = el.scrollWidth
-        const contentHeight = el.scrollHeight
-        
-        const viewportW = window.innerWidth
-        const viewportH = window.innerHeight
-        
-        // Add some padding margin
-        const availableW = viewportW - 20
-        const availableH = viewportH - 20
-        
-        // Calculate scale to fit
-        const scaleX = availableW / contentWidth
-        const scaleY = availableH / contentHeight
-        const scale = Math.min(scaleX, scaleY, 1) // Never scale up, only down
-        
-        el.style.transform = `scale(${scale})`
-        el.style.transformOrigin = 'center center'
-      })
-    }
-
-    const schedule = () => {
-      if (rafId) cancelAnimationFrame(rafId)
-      rafId = requestAnimationFrame(measureAndScale)
-    }
-
-    // Observe size changes
-    const ro = new ResizeObserver(schedule)
-    ro.observe(el)
-
-    window.addEventListener('resize', schedule)
-    schedule()
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId)
-      ro.disconnect()
-      window.removeEventListener('resize', schedule)
-    }
-  }, [phase, players.length, draftPlayers.length, scoreHistory.length, archives.length])
 
   const longPressTimerRef = useRef<number | null>(null)
 
@@ -608,7 +553,7 @@ function App() {
       onClick={phase === 'playing' ? nextTurn : undefined}
       style={phase === 'playing' ? { cursor: 'pointer' } : undefined}
     >
-      <div className="app-scale" ref={appScaleRef}>
+      <div className="app-scale">
       {phase === 'setup' ? (
         <>
           <div className="centered-layout">
