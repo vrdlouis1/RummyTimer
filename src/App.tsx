@@ -156,10 +156,11 @@ function App() {
     const updateScale = () => {
       const width = window.innerWidth
       const height = window.innerHeight
-      const baseWidth = 1200
-      const baseHeight = 820
-      const scale = Math.min(1, width / baseWidth, height / baseHeight)
-      const clamped = Math.max(0.7, scale)
+      // Tuned to fit iPhone 13 mini (375x812) up to large screens.
+      const baseWidth = 900
+      const baseHeight = 760
+      const scale = Math.min(width / baseWidth, height / baseHeight)
+      const clamped = Math.min(1.2, Math.max(0.45, scale))
       document.documentElement.style.setProperty('--ui-scale', String(clamped))
     }
 
