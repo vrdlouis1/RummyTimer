@@ -163,30 +163,34 @@ function App() {
     const measureAndScale = () => {
       rafId = 0
       
-      // Temporarily reset scale to measure natural size
-      el.style.transform = 'scale(1)'
-      el.style.transformOrigin = 'top center'
+      // Reset transform to measure natural size
+      el.style.transform = 'none'
       
-      // Force reflow to get accurate measurements
-      const rect = el.scrollHeight
-      const scrollW = el.scrollWidth
-      
-      const viewportW = window.innerWidth
-      const viewportH = window.innerHeight
-      
-      // Calculate scale needed to fit content in viewport
-      const scaleX = viewportW / Math.max(scrollW, 1)
-      const scaleY = viewportH / Math.max(rect, 1)
-      const scale = Math.min(scaleX, scaleY, 1.5) // Cap at 1.5x max
-      
-      // Apply scale
-      el.style.transform = `scale(${scale})`
-      el.style.transformOrigin = 'top center'
+      // Get dimensions after layout
+      requestAnimationFrame(() => {
+        const contentWidth = el.scrollWidth
+        const contentHeight = el.scrollHeight
+        
+        const viewportW = window.innerWidth
+        const viewportH = window.innerHeight
+        
+        // Add some padding margin
+        const availableW = viewportW - 20
+        const availableH = viewportH - 20
+        
+        // Calculate scale to fit
+        const scaleX = availableW / contentWidth
+        const scaleY = availableH / contentHeight
+        const scale = Math.min(scaleX, scaleY, 1) // Never scale up, only down
+        
+        el.style.transform = `scale(${scale})`
+        el.style.transformOrigin = 'center center'
+      })
     }
 
     const schedule = () => {
-      if (rafId) return
-      rafId = window.requestAnimationFrame(measureAndScale)
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(measureAndScale)
     }
 
     // Observe size changes
@@ -194,16 +198,12 @@ function App() {
     ro.observe(el)
 
     window.addEventListener('resize', schedule)
-    window.addEventListener('orientationchange', schedule)
-    
-    // Initial measure
     schedule()
 
     return () => {
-      if (rafId) window.cancelAnimationFrame(rafId)
+      if (rafId) cancelAnimationFrame(rafId)
       ro.disconnect()
       window.removeEventListener('resize', schedule)
-      window.removeEventListener('orientationchange', schedule)
     }
   }, [phase, players.length, draftPlayers.length, scoreHistory.length, archives.length])
 
