@@ -1011,6 +1011,30 @@ h4 {
   }
 }
 
+@media (max-width: 520px) {
+  .timer-header-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .corner-controls {
+    position: static;
+    justify-content: center;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .rummi-btn,
+  .pause-btn {
+    width: 100%;
+  }
+}
+
 /* Centered layout styles */
 .centered-layout {
   min-height: 100vh;
