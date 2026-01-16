@@ -151,6 +151,61 @@ function App() {
   const startPerfRef = useRef<number>(0)
   const elapsedBeforeRunRef = useRef<number>(0)
   const toneRef = useRef(createTonePlayer())
+  const appScaleRef = useRef<HTMLDivElement | null>(null)
+
+  // Scale the entire UI to fit viewport without scrolling
+  useEffect(() => {
+    const el = appScaleRef.current
+    if (!el) return
+
+    let rafId = 0
+
+    const measureAndScale = () => {
+      rafId = 0
+      
+      // Temporarily reset scale to measure natural size
+      el.style.transform = 'scale(1)'
+      el.style.transformOrigin = 'top center'
+      
+      // Force reflow to get accurate measurements
+      const rect = el.scrollHeight
+      const scrollW = el.scrollWidth
+      
+      const viewportW = window.innerWidth
+      const viewportH = window.innerHeight
+      
+      // Calculate scale needed to fit content in viewport
+      const scaleX = viewportW / Math.max(scrollW, 1)
+      const scaleY = viewportH / Math.max(rect, 1)
+      const scale = Math.min(scaleX, scaleY, 1.5) // Cap at 1.5x max
+      
+      // Apply scale
+      el.style.transform = `scale(${scale})`
+      el.style.transformOrigin = 'top center'
+    }
+
+    const schedule = () => {
+      if (rafId) return
+      rafId = window.requestAnimationFrame(measureAndScale)
+    }
+
+    // Observe size changes
+    const ro = new ResizeObserver(schedule)
+    ro.observe(el)
+
+    window.addEventListener('resize', schedule)
+    window.addEventListener('orientationchange', schedule)
+    
+    // Initial measure
+    schedule()
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId)
+      ro.disconnect()
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('orientationchange', schedule)
+    }
+  }, [phase, players.length, draftPlayers.length, scoreHistory.length, archives.length])
 
   const longPressTimerRef = useRef<number | null>(null)
 
@@ -553,7 +608,7 @@ function App() {
       onClick={phase === 'playing' ? nextTurn : undefined}
       style={phase === 'playing' ? { cursor: 'pointer' } : undefined}
     >
-      <div className="app-scale">
+      <div className="app-scale" ref={appScaleRef}>
       {phase === 'setup' ? (
         <>
           <div className="centered-layout">
