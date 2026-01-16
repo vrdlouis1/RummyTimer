@@ -4,6 +4,9 @@
   padding: 0;
   color: #000000;
   background: #ffffff;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .page.playing {
@@ -17,17 +20,18 @@
 
 .centered-layout {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: clamp(14px, 3.5vh, 32px);
   width: 100%;
 }
 
 .header-centered {
   text-align: center;
-  margin-bottom: 120px;
+  margin-bottom: clamp(14px, 3.5vh, 56px);
   position: relative;
   width: 100%;
   max-width: 1200px;
@@ -35,7 +39,7 @@
 
 .header-centered h1 {
   margin: 0;
-  font-size: 48px;
+  font-size: clamp(28px, 5vw, 48px);
 }
 
 .icon-only-btn {
@@ -520,7 +524,7 @@ h4 {
 }
 
 .big-time {
-  font-size: 180px;
+  font-size: clamp(84px, 18vw, 180px);
   font-weight: 900;
   letter-spacing: -4px;
   margin: 0;
@@ -586,8 +590,9 @@ h4 {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   background: #ffffff;
-  padding: 20px;
+  padding: clamp(10px, 2.4vh, 20px);
 }
 
 .timer-header {
@@ -600,11 +605,11 @@ h4 {
 .timer-header-centered {
   position: relative;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: clamp(8px, 2.8vh, 26px);
 }
 
 .player-name-centered {
-  font-size: 48px;
+  font-size: clamp(22px, 5.5vw, 48px);
   font-weight: 800;
   margin: 0;
   color: #000000;
@@ -613,7 +618,7 @@ h4 {
 .corner-controls {
   position: absolute;
   top: 0;
-  right: 20px;
+  right: 0;
   display: flex;
   gap: 10px;
 }
@@ -631,18 +636,39 @@ h4 {
 }
 
 .mini-btn {
-  width: 56px;
-  height: 56px;
+  width: clamp(44px, 7.2vw, 56px);
+  height: clamp(44px, 7.2vw, 56px);
   border-radius: 14px;
   background: #ffffff;
   border: 2px solid #000000;
   color: #000000;
-  font-size: 24px;
+  font-size: clamp(18px, 3.6vw, 24px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.hold-required {
+  position: relative;
+}
+
+.hold-required::after {
+  content: 'HOLD';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #666666;
+  background: #ffffff;
+  padding: 2px 6px;
+  border: 1px solid #000000;
+  border-radius: 999px;
+  pointer-events: none;
 }
 
 .mini-btn:hover {
@@ -661,7 +687,8 @@ h4 {
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: 20px 0;
+  margin: clamp(6px, 1.6vh, 16px) 0;
+  min-height: 0;
 }
 
 .timer-display {
@@ -671,10 +698,10 @@ h4 {
 
 .action-bar {
   display: flex;
-  gap: 20px;
+  gap: clamp(10px, 2.4vw, 20px);
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
+  margin-top: clamp(6px, 1.6vh, 16px);
 }
 
 .next-btn {
@@ -702,10 +729,10 @@ h4 {
   background: #d6001c;
   color: #fff;
   border: none;
-  padding: 24px 36px;
+  padding: clamp(14px, 2.6vh, 22px) clamp(18px, 3.6vw, 32px);
   border-radius: 20px;
   font-weight: 800;
-  font-size: 28px;
+  font-size: clamp(18px, 3.8vw, 28px);
   box-shadow: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -721,13 +748,107 @@ h4 {
   background: #000000;
   color: #fff;
   border: none;
-  padding: 24px 36px;
+  padding: clamp(14px, 2.6vh, 22px) clamp(18px, 3.6vw, 32px);
   border-radius: 20px;
   font-weight: 800;
-  font-size: 28px;
+  font-size: clamp(18px, 3.8vw, 28px);
   box-shadow: none;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+/* History + archives (card layout, no-scroll friendly) */
+.history-panel {
+  margin-top: clamp(10px, 2.2vh, 18px);
+}
+
+.history-pagination {
+  display: flex;
+  gap: 8px;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.history-card {
+  border: 2px solid #000000;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: center;
+}
+
+.history-scores-grid,
+.archive-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.history-score-tile {
+  border: 2px solid #000000;
+  border-radius: 14px;
+  padding: 10px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.history-player {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.history-score {
+  font-weight: 900;
+  font-size: clamp(22px, 5.6vw, 38px);
+  line-height: 1;
+}
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.archive-card {
+  border: 2px solid #000000;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.archive-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.archive-meta {
+  color: #666666;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.archive-pagination {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 .pause-btn:hover {

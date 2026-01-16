@@ -130,6 +130,11 @@ function App() {
   const [draftSecondsText, setDraftSecondsText] = useState<Record<string, string>>({})
   const [scoreText, setScoreText] = useState<Record<string, string>>({})
 
+  const SCORE_HISTORY_PAGE_SIZE = 3
+  const ARCHIVES_PAGE_SIZE = 3
+  const [scoreHistoryPage, setScoreHistoryPage] = useState(0)
+  const [archivesPage, setArchivesPage] = useState(0)
+
   const [players, setPlayers] = useState<Player[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const [timeLeft, setTimeLeft] = useState(0)
@@ -146,6 +151,8 @@ function App() {
   const startPerfRef = useRef<number>(0)
   const elapsedBeforeRunRef = useRef<number>(0)
   const toneRef = useRef(createTonePlayer())
+
+  const longPressTimerRef = useRef<number | null>(null)
 
   const activePlayer = useMemo(() => players[activeIndex], [players, activeIndex])
 
@@ -224,6 +231,50 @@ function App() {
     const elapsed = (performance.now() - startPerfRef.current) / 1000
     elapsedBeforeRunRef.current += Math.max(0, elapsed)
     setRunning(false)
+  }
+
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current != null) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  const getLongPressProps = (action: () => void, enabled: boolean) => {
+    if (!enabled) {
+      return {
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation()
+          action()
+        },
+      }
+    }
+
+    const start = (e: React.PointerEvent) => {
+      e.stopPropagation()
+      clearLongPressTimer()
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTimerRef.current = null
+        action()
+      }, 650)
+    }
+
+    const cancel = (e: React.PointerEvent) => {
+      e.stopPropagation()
+      clearLongPressTimer()
+    }
+
+    return {
+      onPointerDown: start,
+      onPointerUp: cancel,
+      onPointerCancel: cancel,
+      onPointerLeave: cancel,
+      onClick: (e: React.MouseEvent) => {
+        // Prevent accidental taps/clicks when long-press is required.
+        e.preventDefault()
+        e.stopPropagation()
+      },
+    }
   }
 
   const resumeTimer = () => {
@@ -391,6 +442,7 @@ function App() {
     setScoreText(Object.fromEntries(nextPlayers.map((p) => [p.id, String(p.score)])))
     const snap = buildScoreSnapshot(nextPlayers)
     if (snap) setScoreHistory((prev) => [snap, ...prev].slice(0, 50))
+    setScoreHistoryPage(0)
     setPhase('playing')
     resumeTimer()
   }
@@ -412,6 +464,7 @@ function App() {
       settings: { ...settings },
     }
     setArchives((prev) => [archive, ...prev].slice(0, 50))
+    setArchivesPage(0)
 
     // Reset back to setup
     handleReset()
@@ -450,6 +503,9 @@ function App() {
 
   const nextTurn = () => {
     if (!players.length) return
+
+    // Prevent unintended turn switches while adjusting scores.
+    if (phase !== 'playing') return
 
     setUndoStack((prev) => [...prev.slice(-19), { activeIndex, timeLeft, currentDuration, startedAt: turnStartedAt }])
 
@@ -572,27 +628,40 @@ function App() {
         </>
       ) : phase === 'playing' ? (
         <>
-          <div className="fullscreen-timer">
+          <div className="fullscreen-timer" onClick={nextTurn} style={{ cursor: 'pointer' }}>
             <div className="timer-header-centered">
               <h2 className="player-name-centered">{activePlayer?.name ?? 'No player'}</h2>
               <div className="corner-controls">
-                <button className="mini-btn" onClick={undoTurn} disabled={!undoStack.length}>
+                <button
+                  className={`mini-btn ${running ? 'hold-required' : ''}`}
+                  disabled={!undoStack.length}
+                  title={running ? 'Hold to use' : 'Undo'}
+                  {...getLongPressProps(undoTurn, running)}
+                >
                   ↶
                 </button>
-                <button className="mini-btn" onClick={() => setPhase('settings')}>
+                <button
+                  className={`mini-btn ${running ? 'hold-required' : ''}`}
+                  title={running ? 'Hold to open settings' : 'Settings'}
+                  {...getLongPressProps(() => setPhase('settings'), running)}
+                >
                   ⚙
                 </button>
               </div>
             </div>
 
-            <div className={`timer-main ${timerState}`} onClick={nextTurn} style={{ cursor: 'pointer' }}>
+            <div className={`timer-main ${timerState}`}>
               <div className="timer-display">
                 <div className={`big-time ${timerState === 'critical' || timerState === 'overtime' ? 'magnify' : ''}`}>{formatClock(timeLeft)}</div>
               </div>
             </div>
 
-            <div className="action-bar">
-              <button className="rummi-btn" onClick={handleRummi}>
+            <div className="action-bar" onClick={(e) => e.stopPropagation()}>
+              <button
+                className={`rummi-btn ${running ? 'hold-required' : ''}`}
+                title={running ? 'Hold to open scores' : 'RUMMI'}
+                {...getLongPressProps(handleRummi, running)}
+              >
                 RUMMI
               </button>
               <button
@@ -681,9 +750,36 @@ function App() {
                 <div className="history-panel">
                   <div className="panel-header">
                     <h3>Score History</h3>
+                    <div className="history-pagination">
+                      <button
+                        className="mini-btn"
+                        onClick={() => setScoreHistoryPage((p) => Math.max(0, p - 1))}
+                        disabled={scoreHistoryPage === 0}
+                        title="Newer"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        className="mini-btn"
+                        onClick={() =>
+                          setScoreHistoryPage((p) =>
+                            (p + 1) * SCORE_HISTORY_PAGE_SIZE < scoreHistory.length ? p + 1 : p,
+                          )
+                        }
+                        disabled={(scoreHistoryPage + 1) * SCORE_HISTORY_PAGE_SIZE >= scoreHistory.length}
+                        title="Older"
+                      >
+                        ›
+                      </button>
+                    </div>
                   </div>
                   <div className="history-grid">
-                    {scoreHistory.map((snap) => (
+                    {scoreHistory
+                      .slice(
+                        scoreHistoryPage * SCORE_HISTORY_PAGE_SIZE,
+                        scoreHistoryPage * SCORE_HISTORY_PAGE_SIZE + SCORE_HISTORY_PAGE_SIZE,
+                      )
+                      .map((snap) => (
                       <div key={snap.id} className="history-card">
                         <div className="history-card-header">
                           <span className="badge-time">{new Date(snap.timestamp).toLocaleString()}</span>
@@ -724,7 +820,9 @@ function App() {
                 </div>
               ) : (
                 <div className="archive-grid">
-                  {archives.map((a) => (
+                  {archives
+                    .slice(archivesPage * ARCHIVES_PAGE_SIZE, archivesPage * ARCHIVES_PAGE_SIZE + ARCHIVES_PAGE_SIZE)
+                    .map((a) => (
                     <div key={a.id} className="archive-card">
                       <div className="archive-card-header">
                         <span className="badge-time">{new Date(a.savedAt).toLocaleString()}</span>
@@ -743,6 +841,27 @@ function App() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {!!archives.length && (
+                <div className="archive-pagination">
+                  <button
+                    className="secondary"
+                    onClick={() => setArchivesPage((p) => Math.max(0, p - 1))}
+                    disabled={archivesPage === 0}
+                  >
+                    Newer
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      setArchivesPage((p) => ((p + 1) * ARCHIVES_PAGE_SIZE < archives.length ? p + 1 : p))
+                    }
+                    disabled={(archivesPage + 1) * ARCHIVES_PAGE_SIZE >= archives.length}
+                  >
+                    Older
+                  </button>
                 </div>
               )}
             </div>
