@@ -540,9 +540,9 @@ h4 {
 }
 
 .big-time {
-  font-size: clamp(84px, 18vw, 180px);
+  font-size: clamp(68px, 16vw, 180px);
   font-weight: 900;
-  letter-spacing: -4px;
+  letter-spacing: clamp(-3px, -0.6vw, -1px);
   margin: 0;
   color: #0f1115;
   line-height: 1;
@@ -718,6 +718,7 @@ h4 {
   justify-content: center;
   align-items: center;
   margin-top: clamp(6px, 1.6vh, 16px);
+  flex-wrap: wrap;
 }
 
 .next-btn {
@@ -1016,7 +1017,7 @@ h4 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .corner-controls {
@@ -1032,6 +1033,32 @@ h4 {
   .rummi-btn,
   .pause-btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .timer-header-centered {
+    margin-bottom: clamp(6px, 1.6vh, 12px);
+  }
+
+  .corner-controls {
+    gap: 6px;
+  }
+
+  .mini-btn {
+    width: clamp(40px, 10vw, 48px);
+    height: clamp(40px, 10vw, 48px);
+    font-size: clamp(16px, 4.5vw, 20px);
+  }
+
+  .big-time {
+    font-size: clamp(56px, 14vw, 130px);
+  }
+
+  .rummi-btn,
+  .pause-btn {
+    padding: clamp(12px, 2vh, 18px) clamp(16px, 4vw, 26px);
+    font-size: clamp(16px, 4.5vw, 24px);
   }
 }
 
