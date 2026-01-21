@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
+import { useSoundTrigger, useSoundCalibration, SoundProfile } from './useSoundTrigger'
 
 type Player = {
   id: string
@@ -17,6 +18,9 @@ type Settings = {
   cueVolume: number
   tonePalette: TonePalette
   muted: boolean
+  soundTriggerEnabled: boolean
+  soundTriggerThreshold: number
+  soundProfile: SoundProfile | null
 }
 
 type TurnEntry = {
@@ -41,7 +45,7 @@ type TurnSnapshot = {
   startedAt: number
 }
 
-type Phase = 'setup' | 'playing' | 'scores' | 'settings' | 'archives'
+type Phase = 'setup' | 'playing' | 'scores' | 'settings' | 'archives' | 'calibration'
 
 type SessionArchive = {
   id: string
@@ -116,6 +120,9 @@ const defaultSettings: Settings = {
   cueVolume: 0.12,
   tonePalette: 'warm',
   muted: false,
+  soundTriggerEnabled: false,
+  soundTriggerThreshold: 0.5,
+  soundProfile: null,
 }
 
 const defaultPlayers: Player[] = [
@@ -537,6 +544,20 @@ function App() {
     setPhase('scores')
   }
 
+  // Sound trigger integration
+  const { isListening, hasPermission, audioLevel, similarity } = useSoundTrigger({
+    enabled: settings.soundTriggerEnabled && phase === 'playing' && running,
+    threshold: settings.soundTriggerThreshold,
+    cooldownMs: 800,
+    soundProfile: settings.soundProfile,
+    onTrigger: () => {
+      nextTurn()
+    },
+  })
+
+  // Sound calibration
+  const calibration = useSoundCalibration()
+
   // Back to timer handled by handleContinueGame
 
   const timerState = (() => {
@@ -634,6 +655,20 @@ function App() {
       ) : phase === 'playing' ? (
         <>
           <div className="fullscreen-timer">
+            {settings.soundTriggerEnabled && isListening && (
+              <div className="mic-indicator">
+                <span className="mic-icon">🎤</span>
+                <div className="mic-level-bar">
+                  <div 
+                    className="mic-level-fill" 
+                    style={{ 
+                      width: `${audioLevel * 100}%`,
+                      background: audioLevel > settings.soundTriggerThreshold ? '#d6001c' : '#000'
+                    }} 
+                  />
+                </div>
+              </div>
+            )}
             <div className="timer-header-centered">
               <h2 className="player-name-centered">{activePlayer?.name ?? 'No player'}</h2>
               <div className="corner-controls">
@@ -872,6 +907,117 @@ function App() {
             </div>
           </div>
         </>
+      ) : phase === 'calibration' ? (
+        <>
+          <div className="centered-layout">
+            <div className="header-centered">
+              <h1>🎤 Calibrate Sound</h1>
+              <button 
+                className="icon-only-btn" 
+                onClick={() => {
+                  calibration.stopCalibration()
+                  setPhase('settings')
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="content-centered">
+              <div className="calibration-panel">
+                {calibration.calibrationState === 'idle' && (
+                  <>
+                    <p className="help" style={{ textAlign: 'center', marginBottom: '16px' }}>
+                      Record 3-5 samples of the sound you want to use to change turns 
+                      (e.g., clap, tap on table, bell).
+                    </p>
+                    <button 
+                      className="primary" 
+                      onClick={calibration.startCalibration}
+                    >
+                      Start Recording
+                    </button>
+                  </>
+                )}
+
+                {(calibration.calibrationState === 'listening' || calibration.calibrationState === 'recording') && (
+                  <>
+                    <div className="calibration-status">
+                      <span className={`calibration-indicator ${calibration.calibrationState}`}>
+                        {calibration.calibrationState === 'listening' ? '👂 Listening...' : '🔴 Recording...'}
+                      </span>
+                    </div>
+
+                    <p className="help" style={{ textAlign: 'center' }}>
+                      Make your sound now! The app will automatically detect and record it.
+                    </p>
+
+                    <div className="audio-level-indicator" style={{ marginBottom: '16px' }}>
+                      <div 
+                        className="audio-level-bar" 
+                        style={{ 
+                          width: `${calibration.currentLevel * 100}%`,
+                          background: calibration.calibrationState === 'recording' ? '#d6001c' : '#000'
+                        }} 
+                      />
+                    </div>
+
+                    <div className="calibration-samples">
+                      <h3>Samples recorded: {calibration.samples.length}</h3>
+                      {calibration.samples.length > 0 && (
+                        <div className="sample-list">
+                          {calibration.samples.map((sample, i) => (
+                            <div key={i} className="sample-item">
+                              <span>#{i + 1}</span>
+                              <span>Peak: {(sample.peakLevel * 100).toFixed(0)}%</span>
+                              <span>{sample.durationMs.toFixed(0)}ms</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="actions-centered" style={{ marginTop: '16px' }}>
+                      {calibration.samples.length >= 2 && (
+                        <button 
+                          className="primary" 
+                          onClick={() => {
+                            const profile = calibration.buildProfile()
+                            if (profile) {
+                              setSettings((s) => ({ ...s, soundProfile: profile }))
+                              calibration.stopCalibration()
+                              setPhase('settings')
+                            }
+                          }}
+                        >
+                          Save ({calibration.samples.length} samples)
+                        </button>
+                      )}
+                      <button 
+                        className="secondary" 
+                        onClick={() => {
+                          calibration.clearSamples()
+                        }}
+                        disabled={calibration.samples.length === 0}
+                      >
+                        Clear
+                      </button>
+                      <button 
+                        className="secondary" 
+                        onClick={() => {
+                          calibration.stopCalibration()
+                          setPhase('settings')
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
       ) : (
         <>
           <div className="centered-layout">
@@ -942,6 +1088,84 @@ function App() {
                       <span>{settings.muted ? 'On' : 'Off'}</span>
                     </label>
                   </div>
+                </section>
+
+                <section className="settings-section">
+                  <div className="panel-header">
+                    <h3>🎤 Sound Trigger</h3>
+                  </div>
+
+                  <div className="settings-center">
+                    <p className="help">Change turn with a clap or tap sound</p>
+                    <label className="switch-large">
+                      <input
+                        type="checkbox"
+                        checked={settings.soundTriggerEnabled}
+                        onChange={(e) => setSettings((s) => ({ ...s, soundTriggerEnabled: e.target.checked }))}
+                      />
+                      <span>{settings.soundTriggerEnabled ? 'On' : 'Off'}</span>
+                    </label>
+                  </div>
+
+                  {settings.soundTriggerEnabled && (
+                    <>
+                      {!settings.soundProfile && (
+                        <div className="settings-control">
+                          <span>Sensitivity: {Math.round((1 - settings.soundTriggerThreshold) * 100)}%</span>
+                          <input
+                            type="range"
+                            min={0.1}
+                            max={0.9}
+                            step={0.05}
+                            value={settings.soundTriggerThreshold}
+                            onChange={(e) => setSettings((s) => ({ ...s, soundTriggerThreshold: parseFloat(e.target.value) }))}
+                          />
+                          <p className="help">Higher = triggers on quieter sounds</p>
+                        </div>
+                      )}
+
+                      <div className="settings-control">
+                        <button 
+                          className="secondary" 
+                          onClick={() => setPhase('calibration')}
+                        >
+                          {settings.soundProfile ? '🎯 Re-calibrate sound' : '🎯 Calibrate sound'}
+                        </button>
+                        {settings.soundProfile && (
+                          <p className="help" style={{ color: '#0a0' }}>
+                            ✓ Calibrated with {settings.soundProfile.sampleCount} samples
+                          </p>
+                        )}
+                        {settings.soundProfile && (
+                          <button 
+                            className="secondary" 
+                            style={{ fontSize: '12px', padding: '6px 12px' }}
+                            onClick={() => setSettings((s) => ({ ...s, soundProfile: null }))}
+                          >
+                            Clear calibration
+                          </button>
+                        )}
+                      </div>
+
+                      {hasPermission === false && (
+                        <p className="help" style={{ color: '#d6001c' }}>
+                          ⚠️ Microphone access denied. Please allow in browser settings.
+                        </p>
+                      )}
+
+                      {isListening && (
+                        <div className="audio-level-indicator">
+                          <div 
+                            className="audio-level-bar" 
+                            style={{ 
+                              width: `${audioLevel * 100}%`,
+                              background: audioLevel > settings.soundTriggerThreshold ? '#d6001c' : '#000'
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
                 </section>
 
                   <section className="settings-section">
