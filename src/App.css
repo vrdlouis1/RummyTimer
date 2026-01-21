@@ -64,6 +64,7 @@ h3 { margin: 0; font-size: clamp(16px, 4vw, 20px); font-weight: 700; }
   display: flex;
   flex-direction: column;
   width: 100%;
+  position: relative;
 }
 
 .timer-header-centered {
@@ -607,6 +608,124 @@ h3 { margin: 0; font-size: clamp(16px, 4vw, 20px); font-weight: 700; }
   border-radius: 12px;
   padding: 16px;
   background: #fff;
+}
+
+/* === AUDIO LEVEL INDICATOR === */
+.audio-level-indicator {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.audio-level-bar {
+  height: 100%;
+  transition: width 0.05s ease-out, background 0.1s;
+  border-radius: 4px;
+}
+
+/* === MIC INDICATOR (Playing screen) === */
+.mic-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #000;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.mic-icon {
+  font-size: 14px;
+}
+
+.mic-level-bar {
+  width: 40px;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mic-level-fill {
+  height: 100%;
+  transition: width 0.05s ease-out, background 0.1s;
+  border-radius: 3px;
+}
+
+/* === CALIBRATION PAGE === */
+.calibration-panel {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.calibration-status {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.calibration-indicator {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #f0f0f0;
+}
+
+.calibration-indicator.listening {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.calibration-indicator.recording {
+  background: #ffebee;
+  color: #c62828;
+  animation: pulse-bg 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.calibration-samples {
+  width: 100%;
+  text-align: center;
+}
+
+.calibration-samples h3 {
+  margin-bottom: 8px;
+}
+
+.sample-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sample-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sample-item span:first-child {
+  color: #666;
 }
 
 /* === SMALL SCREEN RESPONSIVE ADJUSTMENTS === */
